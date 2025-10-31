@@ -1,0 +1,141 @@
+name: Build and Release YARA Rules
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+  schedule:
+    # Run weekly on Monday at 00:00 UTC to get latest rules
+    - cron: '0 0 * * 1'
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout current repository
+        uses: actions/checkout@v4
+        with:
+          path: main-repo
+      
+      - name: Clone Elastic protections-artifacts
+        uses: actions/checkout@v4
+        with:
+          repository: elastic/protections-artifacts
+          path: elastic-repo
+          
+      - name: Create build directories
+        run: |
+          mkdir -p build/linux
+          mkdir -p build/windows
+          
+      - name: Copy YARA rules from Elastic repository
+        run: |
+          # Copy Linux and Multi rules for Linux archive
+          find elastic-repo/yara -maxdepth 1 -type f \( -name "Linux_*.yar" -o -name "Multi_*.yar" \) -exec cp {} build/linux/ \;
+          
+          # Copy Windows and Multi rules for Windows archive
+          find elastic-repo/yara -maxdepth 1 -type f \( -name "Windows_*.yar" -o -name "Multi_*.yar" \) -exec cp {} build/windows/ \;
+          
+      - name: Copy custom YARA rules (if they exist)
+        run: |
+          # Check if custom directory exists in main repo
+          if [ -d "main-repo/custom" ]; then
+            echo "Found custom directory, copying rules..."
+            
+            # Copy custom Linux and Multi rules
+            find main-repo/custom -type f \( -name "Linux_*.yar" -o -name "Multi_*.yar" \) -exec cp {} build/linux/ \; 2>/dev/null || true
+            
+            # Copy custom Windows and Multi rules
+            find main-repo/custom -type f \( -name "Windows_*.yar" -o -name "Multi_*.yar" \) -exec cp {} build/windows/ \; 2>/dev/null || true
+          else
+            echo "No custom directory found, skipping custom rules..."
+          fi
+          
+      - name: Display rule counts
+        run: |
+          echo "Linux archive will contain:"
+          ls -1 build/linux/ | wc -l
+          echo "files"
+          echo ""
+          echo "Windows archive will contain:"
+          ls -1 build/windows/ | wc -l
+          echo "files"
+          
+      - name: Create compressed archives
+        run: |
+          cd build
+          tar -cJf linux.tar.xz -C linux .
+          tar -cJf windows.tar.xz -C windows .
+          cd ..
+          
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          LINUX_COUNT=$(ls -1 build/linux/ | wc -l)
+          WINDOWS_COUNT=$(ls -1 build/windows/ | wc -l)
+          
+          cat > release_notes.md << EOF
+          # YARA Rules Release
+          
+          This release contains compiled YARA rules from Elastic's protections-artifacts repository and custom rules.
+          
+          ## Contents
+          
+          - **linux.tar.xz**: ${LINUX_COUNT} YARA rules for Linux systems (includes Linux_* and Multi_* rules)
+          - **windows.tar.xz**: ${WINDOWS_COUNT} YARA rules for Windows systems (includes Windows_* and Multi_* rules)
+          
+          ## Usage
+          
+          ### Extract the archives:
+          \`\`\`bash
+          # For Linux rules
+          tar -xJf linux.tar.xz -C /path/to/yara/rules/linux/
+          
+          # For Windows rules
+          tar -xJf windows.tar.xz -C /path/to/yara/rules/windows/
+          \`\`\`
+          
+          ### Scan with YARA:
+          \`\`\`bash
+          # Linux
+          yara -r /path/to/yara/rules/linux/ /path/to/scan/
+          
+          # Windows
+          yara -r /path/to/yara/rules/windows/ /path/to/scan/
+          \`\`\`
+          
+          ## Source
+          
+          Rules sourced from: [elastic/protections-artifacts](https://github.com/elastic/protections-artifacts)
+          
+          Generated on: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          EOF
+          
+          echo "notes_file=release_notes.md" >> $GITHUB_OUTPUT
+          
+      - name: Get or create release tag
+        id: tag
+        run: |
+          if [ "${{ github.ref_type }}" == "tag" ]; then
+            echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          else
+            TAG="v$(date +%Y%m%d-%H%M%S)"
+            echo "tag=$TAG" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: YARA Rules Release ${{ steps.tag.outputs.tag }}
+          body_path: release_notes.md
+          files: |
+            build/linux.tar.xz
+            build/windows.tar.xz
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

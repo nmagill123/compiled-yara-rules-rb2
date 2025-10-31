@@ -1,0 +1,33 @@
+# Build artifacts
+build/
+*.tar.xz
+*.tar.gz
+*.zip
+
+*.md
+# Release notes
+release_notes.md
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Don't ignore custom rules
+!custom/*.yar
+!custom/*.yara
+

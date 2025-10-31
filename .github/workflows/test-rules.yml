@@ -1,0 +1,76 @@
+name: Test YARA Rules
+
+on:
+  pull_request:
+    paths:
+      - 'custom/*.yar'
+      - 'custom/*.yara'
+  push:
+    branches:
+      - main
+    paths:
+      - 'custom/*.yar'
+      - 'custom/*.yara'
+
+jobs:
+  validate-rules:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Install YARA
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y yara
+          
+      - name: Validate YARA syntax
+        run: |
+          echo "Validating custom YARA rules..."
+          
+          # Check if custom directory has any .yar files
+          if [ -n "$(find custom -name '*.yar' -o -name '*.yara' 2>/dev/null)" ]; then
+            for rule in custom/*.yar custom/*.yara 2>/dev/null; do
+              if [ -f "$rule" ]; then
+                echo "Checking: $rule"
+                yara -w "$rule" /dev/null || exit 1
+                echo "✓ $rule is valid"
+              fi
+            done
+            echo "All rules passed validation!"
+          else
+            echo "No YARA rules found in custom directory"
+          fi
+          
+      - name: Check naming conventions
+        run: |
+          echo "Checking file naming conventions..."
+          
+          for file in custom/*.yar custom/*.yara 2>/dev/null; do
+            if [ -f "$file" ]; then
+              basename=$(basename "$file")
+              if [[ ! "$basename" =~ ^(Linux_|Windows_|Multi_|MacOS_) ]]; then
+                echo "❌ Error: $basename does not follow naming convention"
+                echo "Files must start with: Linux_, Windows_, Multi_, or MacOS_"
+                exit 1
+              fi
+              echo "✓ $basename follows naming convention"
+            fi
+          done
+          
+      - name: Generate validation report
+        if: success()
+        run: |
+          echo "# YARA Rules Validation Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ All YARA rules passed validation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Validated Rules" >> $GITHUB_STEP_SUMMARY
+          
+          for file in custom/*.yar custom/*.yara 2>/dev/null; do
+            if [ -f "$file" ]; then
+              echo "- $(basename "$file")" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
