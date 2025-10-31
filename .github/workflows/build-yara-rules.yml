@@ -9,6 +9,9 @@ on:
     # Run weekly on Monday at 00:00 UTC to get latest rules
     - cron: '0 0 * * 1'
 
+permissions:
+  contents: write
+
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
