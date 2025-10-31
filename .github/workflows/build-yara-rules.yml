@@ -33,28 +33,23 @@ jobs:
           mkdir -p build/linux
           mkdir -p build/windows
           
-      - name: Debug - List Elastic YARA directory
+      - name: Count Elastic YARA rules
         run: |
-          echo "=== Checking elastic-repo structure ==="
-          ls -la elastic-repo/ || echo "elastic-repo directory not found"
+          echo "=== YARA Rules from Elastic ===" 
+          echo "Linux rules:   $(find elastic-repo/yara/rules -type f -name 'Linux_*.yar' | wc -l)"
+          echo "Windows rules: $(find elastic-repo/yara/rules -type f -name 'Windows_*.yar' | wc -l)"
+          echo "Multi rules:   $(find elastic-repo/yara/rules -type f -name 'Multi_*.yar' | wc -l)"
+          echo "MacOS rules:   $(find elastic-repo/yara/rules -type f \( -name 'MacOS_*.yar' -o -name 'Macos_*.yar' \) | wc -l)"
           echo ""
-          echo "=== Listing YARA files in elastic-repo/yara ==="
-          ls -la elastic-repo/yara/*.yar 2>/dev/null || echo "No .yar files found"
-          echo ""
-          echo "=== Counting rule files by platform ==="
-          echo "Linux rules: $(find elastic-repo/yara -maxdepth 1 -name "Linux_*.yar" 2>/dev/null | wc -l)"
-          echo "Windows rules: $(find elastic-repo/yara -maxdepth 1 -name "Windows_*.yar" 2>/dev/null | wc -l)"
-          echo "Multi rules: $(find elastic-repo/yara -maxdepth 1 -name "Multi_*.yar" 2>/dev/null | wc -l)"
-          echo "MacOS rules: $(find elastic-repo/yara -maxdepth 1 -name "MacOS_*.yar" 2>/dev/null | wc -l)"
           
       - name: Copy YARA rules from Elastic repository
         run: |
           echo "Copying Linux and Multi rules for Linux archive..."
-          find elastic-repo/yara -maxdepth 1 -type f \( -name "Linux_*.yar" -o -name "Multi_*.yar" \) -exec cp -v {} build/linux/ \;
+          find elastic-repo/yara/rules -type f \( -name "Linux_*.yar" -o -name "Multi_*.yar" \) -exec cp -v {} build/linux/ \;
           
           echo ""
           echo "Copying Windows and Multi rules for Windows archive..."
-          find elastic-repo/yara -maxdepth 1 -type f \( -name "Windows_*.yar" -o -name "Multi_*.yar" \) -exec cp -v {} build/windows/ \;
+          find elastic-repo/yara/rules -type f \( -name "Windows_*.yar" -o -name "Multi_*.yar" \) -exec cp -v {} build/windows/ \;
           
       - name: Copy custom YARA rules (if they exist)
         run: |
