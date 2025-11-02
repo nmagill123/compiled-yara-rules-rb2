@@ -31,13 +31,15 @@ jobs:
           
           # Check if custom directory has any .yar files
           if [ -n "$(find custom -name '*.yar' -o -name '*.yara' 2>/dev/null)" ]; then
-            for rule in custom/*.yar custom/*.yara 2>/dev/null; do
+            shopt -s nullglob
+            for rule in custom/*.yar custom/*.yara; do
               if [ -f "$rule" ]; then
                 echo "Checking: $rule"
                 yara -w "$rule" /dev/null || exit 1
                 echo "✓ $rule is valid"
               fi
             done
+            shopt -u nullglob
             echo "All rules passed validation!"
           else
             echo "No YARA rules found in custom directory"
@@ -47,7 +49,8 @@ jobs:
         run: |
           echo "Checking file naming conventions..."
           
-          for file in custom/*.yar custom/*.yara 2>/dev/null; do
+          shopt -s nullglob
+          for file in custom/*.yar custom/*.yara; do
             if [ -f "$file" ]; then
               basename=$(basename "$file")
               if [[ ! "$basename" =~ ^(Linux_|Windows_|Multi_|MacOS_) ]]; then
@@ -58,6 +61,7 @@ jobs:
               echo "✓ $basename follows naming convention"
             fi
           done
+          shopt -u nullglob
           
       - name: Generate validation report
         if: success()
@@ -68,9 +72,11 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Validated Rules" >> $GITHUB_STEP_SUMMARY
           
-          for file in custom/*.yar custom/*.yara 2>/dev/null; do
+          shopt -s nullglob
+          for file in custom/*.yar custom/*.yara; do
             if [ -f "$file" ]; then
               echo "- $(basename "$file")" >> $GITHUB_STEP_SUMMARY
             fi
           done
+          shopt -u nullglob
 

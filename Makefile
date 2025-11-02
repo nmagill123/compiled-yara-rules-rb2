@@ -43,7 +43,7 @@ validate:
 		exit 0; \
 	fi
 	@ERROR=0; \
-	for rule in custom/*.yar custom/*.yara 2>/dev/null; do \
+	for rule in $$(find custom \( -name '*.yar' -o -name '*.yara' \) 2>/dev/null); do \
 		if [ -f "$$rule" ]; then \
 			echo "Validating: $$rule"; \
 			if ! yara -w "$$rule" /dev/null 2>&1; then \
@@ -91,7 +91,7 @@ test: validate
 	@echo "Running tests on custom YARA rules..."
 	@echo "Note: Add test samples to 'test-samples/' directory for more thorough testing"
 	@if [ -d "test-samples" ]; then \
-		for rule in custom/*.yar custom/*.yara 2>/dev/null; do \
+		for rule in $$(find custom \( -name '*.yar' -o -name '*.yara' \) 2>/dev/null); do \
 			if [ -f "$$rule" ]; then \
 				echo "Testing $$rule against samples..."; \
 				yara -r "$$rule" test-samples/ || true; \
