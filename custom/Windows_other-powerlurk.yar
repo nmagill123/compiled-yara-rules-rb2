@@ -40,7 +40,7 @@ rule OTHER_KEETHIEFLURKER
     strings:
         $fun1 = "$Payload" ascii
         $fun2 = "Custom WMI Class Win32_" ascii
-        $fun3 = "Remove-KeeThiefLurker -EventName"
+        $fun3 = "Remove-KeeThiefLurker -EventName" ascii
         $fun4 = "Cleanup Command" ascii
 
         $cmd1 = "Powershell.exe -NoP -C Start-Sleep -Seconds" ascii
@@ -49,8 +49,6 @@ rule OTHER_KEETHIEFLURKER
         $cmd4 = "$Output = Invoke-Expression -Command `$([System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String(`$Payload)))" ascii
         $cmd5 = "[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($(Get-WmiObject -Namespace root\software win32_WindowsUpdate -List).Properties['Output'].value))"
 
-
-        
     condition:
         (1 of ($fun*)) and (1 of ($cmd*)) 
         or (2 of ($cmd*))

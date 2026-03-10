@@ -36,7 +36,7 @@ rule BACKDOOR_EDUCATIONALRATPS1
         $cmd3 = "function Download" ascii
         $cmd4 = "function Upload" ascii
 
-        $ps1 = "IEX "$cmd"" ascii
+        $ps1 = "IEX \"$cmd\"" ascii
         $ps2 = "$cmdString = Get-Command c2" ascii
         $ps3 = "(New-Object System.Net.WebClient).DownloadString($c2)" ascii
     
@@ -47,7 +47,7 @@ rule BACKDOOR_EDUCATIONALRATPS1
 rule BACKDOOR_EDUCATIONALRATEXE
 {
     meta:
-        description = "EducationalRAT c2 client" .exe variant
+        description = "EducationalRAT c2 client .exe variant"
         author = "Adam"
         date = "3/8/2026"
         confidence = "low"
