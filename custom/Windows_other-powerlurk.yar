@@ -47,7 +47,7 @@ rule OTHER_KEETHIEFLURKER
         $cmd2 = "$(Get-ItemProperty -Path `$RegistryPath -Name $PayloadValueName).$PayloadValueName" ascii
         $cmd3 = "$EncodedOutput = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes(`$OutputString))" ascii
         $cmd4 = "$Output = Invoke-Expression -Command `$([System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String(`$Payload)))" ascii
-        $cmd5 = "[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($(Get-WmiObject -Namespace root\software win32_WindowsUpdate -List).Properties['Output'].value))"
+        $cmd5 = "[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($(Get-WmiObject -Namespace root\\software win32_WindowsUpdate -List).Properties['Output'].value))"
 
     condition:
         (1 of ($fun*)) and (1 of ($cmd*)) 
